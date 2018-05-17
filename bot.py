@@ -1,7 +1,6 @@
 import requests, json, logging 
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, CallbackQueryHandler
 from emoji import emojize
-from bs4 import BeautifulSoup 
 import os
 import cloudinary.uploader
 import telegram
