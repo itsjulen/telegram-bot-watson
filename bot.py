@@ -28,7 +28,7 @@ dispatcher = updater.dispatcher
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
 
 def start(bot, update):
-	mensaje = "¡Me alegro de conocerte! Soy CatSon, un bot que utiliza la tecnología de Watson para ayudarte :smile: \n\n ¿Qué puedo hacer?\n - Utiliza /tiempo seguido de un lugar para obtener el tiempo actual\n - Utiliza /traducir y una frase en castellano e intentaré traducírtela a inglés\n - Escríbeme algo y lo responderé (puedo contar chistes)\n - Utiliza /decir y una frase en castellano y te mandaré un audio diciéndolo\n - Mándame una foto y hare un reconocimiento visual (facial o de objetos)"
+	mensaje = "¡Me alegro de conocerte! Soy CatSon, un bot que utiliza la tecnología de Watson para ayudarte :smile: \n\n ¿Qué puedo hacer?\n - Utiliza /tiempo seguido de un lugar para obtener el tiempo actual\n - Utiliza /traducir y una frase en castellano e intentaré traducírtela a inglés\n - Escríbeme algo y lo responderé (puedo contar chistes)\n - Utiliza /decir y una frase en castellano y te mandaré un audio diciéndolo\n - Utiliza /tono seguido de una frase e intentaré adivinar el tono en el que la dices\n - Mándame una foto y hare un reconocimiento visual (facial o de objetos)"
 	bot.send_message(chat_id=update.message.chat_id, text=emojize(mensaje, use_aliases=True))
 	
 start_handler = CommandHandler('start', start)
@@ -51,6 +51,40 @@ def translator(bot, update):
 translator_handler = CommandHandler('traducir', translator)
 dispatcher.add_handler(translator_handler)
 
+def transformar(tone):
+	if tone=="Anger":
+		return "Enfado"
+	elif tone=="Fear":
+		return "Miedo"
+	elif tone=="Joy":
+		return "Alegría"
+	elif tone=="Sadness":
+		return "Tristeza"
+	elif tone=="Analytical":
+		return "Analítico"
+	elif tone=="Confident":
+		return "Seguro"
+	elif tone=="Tentative":
+		return "Tentativo"
+	else:
+		return tone
+	
+def tone(bot, update):
+	update.message.text = update.message.text.split(' ', 1)[1]
+	mensaje = update.message.text
+	r = requests.post(url = URL_WATSON+"tone", data = json.dumps({'body':mensaje}))
+	r = json.loads(r.text)
+	tones = r['document_tone']['tones']
+	mensaje = ""
+	for tone in tones:
+		mensaje = mensaje + "Creo que el tono es " + transformar(tone['tone_name']) + " (" + str(int(100*tone['score'])) + "%)\n"
+	if mensaje=="":
+		mensaje = "El tono de la frase es neutro"
+	bot.send_message(chat_id=update.message.chat_id, text=mensaje)
+	
+tone_handler = CommandHandler('tono', tone)
+dispatcher.add_handler(tone_handler)
+
 def tiempo(bot, update):
 	update.message.text = update.message.text.split(' ', 1)[1]
 	bot.send_message(chat_id=update.message.chat_id, text="Voy a buscar, un momento")
@@ -69,8 +103,8 @@ dispatcher.add_handler(tiempo_handler)
 
 def tts(bot, update):
 	update.message.text = update.message.text.split(' ', 1)[1]
-	mensaje = update.message.text
-	
+	mensaje = update.message.text	
+	mensaje = mensaje.lower().replace('julen','yulen')
 	tmp_f = open('tmp.ogg', 'wb+')
 	
 	r = requests.post(url = URL_WATSON+"tts", data = json.dumps({'body':mensaje}))
